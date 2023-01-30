@@ -3,10 +3,12 @@ services:
 
   mongodb:
     image: mongo
-    container_name: mongodb
+    container_name: mongodb_container
     environment:
       MONGO_INITDB_ROOT_USERNAME: lappis
       MONGO_INITDB_ROOT_PASSWORD: lappis
+    volumes: 
+      - mongodb:/data/db
     ports:
       - "27017:27017"
     restart: unless-stopped
@@ -18,10 +20,57 @@ services:
     volumes:
       - .:/app  
     ports: 
-      - "3000:3000"
+      - "3001:3001"
     depends_on:
       - mongodb
 
+  generateDocs:
+    container_name: app
+    build: .
+    volumes:
+      - .:/app  
+    ports: 
+      - "3001:3001"
+    depends_on:
+      - mongodb
 
+  postgres:
+     image: postgres
+     container_name: postgres
+     environment:
+       POSTGRES_USER: lappis
+       POSTGRES_PASSWORD: lappis
+     volumes:
+        - postgres:/var/lib/postgresql/data
+     ports:
+       - "5432:5432"
+     restart: unless-stopped
+     networks:
+        - postgres-network
 
-    
+  metabase:
+      volumes:
+        - ./metabase-data:/metabase-data
+      environment:
+        MB_DB_TYPE: postgres
+        MB_DB_DBNAME: lappis
+        MB_DB_PORT: 5432
+        MB_DB_USER: lappis
+        MB_DB_PASS: lappis
+        MB_DB_HOST: postgres
+      ports:
+        - 3000:3000
+      image: metabase/metabase
+      restart: always
+      depends_on: 
+        - postgres
+      networks:
+        - postgres-network
+
+volumes:
+      postgres:
+      mongodb:
+
+networks:
+  postgres-network:
+    driver: bridge

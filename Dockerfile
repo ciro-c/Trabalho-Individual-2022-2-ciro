@@ -8,6 +8,6 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-EXPOSE 3000
+EXPOSE 3001
 
 CMD ["python", "src/main.py"]
